@@ -1,8 +1,12 @@
 import 'dotenv/config'
+import { eq } from 'drizzle-orm'
 import type { SQSHandler } from 'aws-lambda'
 import type { SyncJob } from './lib/github/enqueue'
+import { db } from '@topspin/db'
+import { githubInstallations, jiraConnections } from '@topspin/db/schema'
 import { performInitialSync, processWebhookEvent } from './lib/github/sync'
 import { syncJiraConnection, processJiraEvent } from './lib/jira/sync'
+import { correlateOrganization } from './lib/correlation/correlate'
 
 export const handler: SQSHandler = async (event) => {
   const failures: Array<{ messageId: string; error: Error }> = []
@@ -13,10 +17,20 @@ export const handler: SQSHandler = async (event) => {
 
       if (job.type === 'INITIAL_SYNC') {
         await performInitialSync(job.installationId)
+        const [inst] = await db
+          .select({ organizationId: githubInstallations.organizationId })
+          .from(githubInstallations)
+          .where(eq(githubInstallations.installationId, job.installationId))
+        if (inst) await correlateOrganization(inst.organizationId)
       } else if (job.type === 'PROCESS_EVENT') {
         await processWebhookEvent(job.eventId)
       } else if (job.type === 'JIRA_SYNC_CONNECTION') {
         await syncJiraConnection(job.connectionId)
+        const [conn] = await db
+          .select({ organizationId: jiraConnections.organizationId })
+          .from(jiraConnections)
+          .where(eq(jiraConnections.id, job.connectionId))
+        if (conn) await correlateOrganization(conn.organizationId)
       } else if (job.type === 'JIRA_PROCESS_EVENT') {
         await processJiraEvent(job.eventId)
       }
