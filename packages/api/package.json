@@ -1,0 +1,29 @@
+{
+  "name": "@topspin/api",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/lambda.ts",
+  "scripts": {
+    "build": "esbuild src/lambda.ts --bundle --platform=node --target=node22 --outfile=dist/lambda.js --external:@aws-sdk/* --minify",
+    "dev": "tsx watch src/dev.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@hono/zod-validator": "^0.8.0",
+    "@topspin/db": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "better-auth": "^1.2.7",
+    "dotenv": "^16.4.7",
+    "hono": "^4.12.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.13.0",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.0"
+  }
+}

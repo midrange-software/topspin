@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "paths": {
+      "@topspin/db": ["../db/src/index.ts"],
+      "@topspin/db/schema": ["../db/src/schema/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "../db/src/**/*"]
+}

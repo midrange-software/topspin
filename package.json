@@ -1,0 +1,20 @@
+{
+  "name": "topspin",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --filter @topspin/api run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "db:generate": "pnpm --filter @topspin/db run generate",
+    "db:migrate": "pnpm --filter @topspin/db run migrate",
+    "dev": "pnpm --filter @topspin/api run dev",
+    "cdk": "pnpm --filter infra run cdk"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
