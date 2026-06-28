@@ -7,6 +7,9 @@ import { health } from './routes/health'
 import { webhooks } from './routes/github/webhooks'
 import { setup } from './routes/github/setup'
 import { installations } from './routes/github/installations'
+import { oauth as jiraOauth } from './routes/jira/oauth'
+import { webhooks as jiraWebhooks } from './routes/jira/webhooks'
+import { connections as jiraConnections } from './routes/jira/connections'
 
 export const createApp = () => {
   const app = new Hono()
@@ -29,6 +32,10 @@ export const createApp = () => {
   app.route('/api/github/webhooks', webhooks)
   app.route('/api/github/setup', setup)
   app.route('/api/github/installations', installations)
+
+  app.route('/api/jira', jiraOauth)
+  app.route('/api/jira/webhooks', jiraWebhooks)
+  app.route('/api/jira/connections', jiraConnections)
 
   app.onError(errorHandler)
   app.notFound(notFoundHandler)

@@ -1,6 +1,8 @@
 import * as cdk from 'aws-cdk-lib'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources'
+import * as events from 'aws-cdk-lib/aws-events'
+import * as eventsTargets from 'aws-cdk-lib/aws-events-targets'
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2'
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations'
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager'
@@ -19,12 +21,15 @@ export class TopspinStack extends cdk.Stack {
     //   aws secretsmanager create-secret --name topspin/github-app-id --secret-string "<app-id>"
     //   aws secretsmanager create-secret --name topspin/github-app-private-key --secret-string "<pem>"
     //   aws secretsmanager create-secret --name topspin/github-webhook-secret --secret-string "<secret>"
+    //   aws secretsmanager create-secret --name topspin/jira-client-id --secret-string "<client-id>"
+    //   aws secretsmanager create-secret --name topspin/jira-client-secret --secret-string "<client-secret>"
     const dbUrlSecret = secretsmanager.Secret.fromSecretNameV2(this, 'DbUrlSecret', 'topspin/database-url')
     const githubAppIdSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubAppId', 'topspin/github-app-id')
     const githubPrivateKeySecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubPrivateKey', 'topspin/github-app-private-key')
     const githubWebhookSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubWebhookSecret', 'topspin/github-webhook-secret')
+    const jiraClientIdSecret = secretsmanager.Secret.fromSecretNameV2(this, 'JiraClientId', 'topspin/jira-client-id')
+    const jiraClientSecretSecret = secretsmanager.Secret.fromSecretNameV2(this, 'JiraClientSecret', 'topspin/jira-client-secret')
 
-    // Auth secret auto-generated on first deploy
     const authSecret = new secretsmanager.Secret(this, 'AuthSecret', {
       secretName: 'topspin/auth-secret',
       generateSecretString: { excludePunctuation: true, passwordLength: 64 },
@@ -49,15 +54,20 @@ export class TopspinStack extends cdk.Stack {
       BETTER_AUTH_SECRET: authSecret.secretValue.unsafeUnwrap(),
       GITHUB_APP_ID: githubAppIdSecret.secretValue.unsafeUnwrap(),
       GITHUB_APP_PRIVATE_KEY: githubPrivateKeySecret.secretValue.unsafeUnwrap(),
+      JIRA_CLIENT_ID: jiraClientIdSecret.secretValue.unsafeUnwrap(),
+      JIRA_CLIENT_SECRET: jiraClientSecretSecret.secretValue.unsafeUnwrap(),
+    }
+
+    const grantSharedSecretRead = (fn: lambda.Function) => {
+      dbUrlSecret.grantRead(fn)
+      authSecret.grantRead(fn)
+      githubAppIdSecret.grantRead(fn)
+      githubPrivateKeySecret.grantRead(fn)
+      jiraClientIdSecret.grantRead(fn)
+      jiraClientSecretSecret.grantRead(fn)
     }
 
     // ── Lambda: Worker ─────────────────────────────────────────────────────────
-    const workerLogGroup = new logs.LogGroup(this, 'WorkerLogGroup', {
-      logGroupName: '/topspin/worker',
-      retention: logs.RetentionDays.ONE_MONTH,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    })
-
     const workerFunction = new lambda.Function(this, 'WorkerFunction', {
       functionName: 'topspin-worker',
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -65,7 +75,11 @@ export class TopspinStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../../packages/api/dist')),
       memorySize: 1024,
       timeout: cdk.Duration.seconds(300),
-      logGroup: workerLogGroup,
+      logGroup: new logs.LogGroup(this, 'WorkerLogGroup', {
+        logGroupName: '/topspin/worker',
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      }),
       environment: sharedEnv,
     })
 
@@ -76,18 +90,39 @@ export class TopspinStack extends cdk.Stack {
       })
     )
 
-    dbUrlSecret.grantRead(workerFunction)
-    authSecret.grantRead(workerFunction)
-    githubAppIdSecret.grantRead(workerFunction)
-    githubPrivateKeySecret.grantRead(workerFunction)
+    grantSharedSecretRead(workerFunction)
 
-    // ── Lambda: API ────────────────────────────────────────────────────────────
-    const apiLogGroup = new logs.LogGroup(this, 'ApiLogGroup', {
-      logGroupName: '/topspin/api',
-      retention: logs.RetentionDays.ONE_MONTH,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    // ── Lambda: Reconciler (scheduled Jira full-sync) ──────────────────────────
+    const reconcilerFunction = new lambda.Function(this, 'ReconcilerFunction', {
+      functionName: 'topspin-reconciler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      handler: 'reconciler.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../packages/api/dist')),
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(60),
+      logGroup: new logs.LogGroup(this, 'ReconcilerLogGroup', {
+        logGroupName: '/topspin/reconciler',
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      }),
+      environment: {
+        NODE_ENV: 'production',
+        DATABASE_URL: dbUrlSecret.secretValue.unsafeUnwrap(),
+        BACKGROUND_QUEUE_URL: backgroundQueue.queueUrl,
+      },
     })
 
+    dbUrlSecret.grantRead(reconcilerFunction)
+    backgroundQueue.grantSendMessages(reconcilerFunction)
+
+    new events.Rule(this, 'ReconcilerSchedule', {
+      ruleName: 'topspin-jira-reconcile',
+      description: 'Enqueue a full Jira sync for every active connection every 6 hours',
+      schedule: events.Schedule.rate(cdk.Duration.hours(6)),
+      targets: [new eventsTargets.LambdaFunction(reconcilerFunction)],
+    })
+
+    // ── Lambda: API ────────────────────────────────────────────────────────────
     const apiFunction = new lambda.Function(this, 'ApiFunction', {
       functionName: 'topspin-api',
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -95,7 +130,11 @@ export class TopspinStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../../packages/api/dist')),
       memorySize: 512,
       timeout: cdk.Duration.seconds(30),
-      logGroup: apiLogGroup,
+      logGroup: new logs.LogGroup(this, 'ApiLogGroup', {
+        logGroupName: '/topspin/api',
+        retention: logs.RetentionDays.ONE_MONTH,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      }),
       environment: {
         ...sharedEnv,
         GITHUB_WEBHOOK_SECRET: githubWebhookSecret.secretValue.unsafeUnwrap(),
@@ -103,10 +142,7 @@ export class TopspinStack extends cdk.Stack {
       },
     })
 
-    dbUrlSecret.grantRead(apiFunction)
-    authSecret.grantRead(apiFunction)
-    githubAppIdSecret.grantRead(apiFunction)
-    githubPrivateKeySecret.grantRead(apiFunction)
+    grantSharedSecretRead(apiFunction)
     githubWebhookSecret.grantRead(apiFunction)
     backgroundQueue.grantSendMessages(apiFunction)
 
