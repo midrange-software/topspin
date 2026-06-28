@@ -8,21 +8,21 @@ import * as sqs from 'aws-cdk-lib/aws-sqs'
 import { Construct } from 'constructs'
 import * as path from 'path'
 
-export class BackspinStack extends cdk.Stack {
+export class TopspinStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
     // Neon database URL — created manually in AWS Secrets Manager before first deploy:
-    // aws secretsmanager create-secret --name backspin/database-url --secret-string "postgresql://..."
+    // aws secretsmanager create-secret --name topspin/database-url --secret-string "postgresql://..."
     const dbUrlSecret = secretsmanager.Secret.fromSecretNameV2(
       this,
       'DbUrlSecret',
-      'backspin/database-url'
+      'topspin/database-url'
     )
 
     // Auth secret auto-generated on first deploy
     const authSecret = new secretsmanager.Secret(this, 'AuthSecret', {
-      secretName: 'backspin/auth-secret',
+      secretName: 'topspin/auth-secret',
       generateSecretString: {
         excludePunctuation: true,
         passwordLength: 64,
@@ -31,12 +31,12 @@ export class BackspinStack extends cdk.Stack {
 
     // Background processing queue (consumed by workers in Phase 2+)
     const backgroundDlq = new sqs.Queue(this, 'BackgroundDlq', {
-      queueName: 'backspin-background-dlq',
+      queueName: 'topspin-background-dlq',
       retentionPeriod: cdk.Duration.days(14),
     })
 
     const backgroundQueue = new sqs.Queue(this, 'BackgroundQueue', {
-      queueName: 'backspin-background',
+      queueName: 'topspin-background',
       visibilityTimeout: cdk.Duration.seconds(300),
       deadLetterQueue: {
         maxReceiveCount: 3,
@@ -46,14 +46,14 @@ export class BackspinStack extends cdk.Stack {
 
     // Structured log group
     const logGroup = new logs.LogGroup(this, 'ApiLogGroup', {
-      logGroupName: '/backspin/api',
+      logGroupName: '/topspin/api',
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
 
     // API Lambda — points to the pre-built bundle from packages/api/dist
     const apiFunction = new lambda.Function(this, 'ApiFunction', {
-      functionName: 'backspin-api',
+      functionName: 'topspin-api',
       runtime: lambda.Runtime.NODEJS_22_X,
       handler: 'lambda.handler',
       code: lambda.Code.fromAsset(
@@ -77,8 +77,8 @@ export class BackspinStack extends cdk.Stack {
 
     // API Gateway HTTP API (v2)
     const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
-      apiName: 'backspin-api',
-      description: 'Backspin backend API',
+      apiName: 'topspin-api',
+      description: 'Topspin backend API',
       corsPreflight: {
         allowOrigins: ['*'],
         allowMethods: [apigatewayv2.CorsHttpMethod.ANY],
@@ -102,13 +102,13 @@ export class BackspinStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: httpApi.url!,
       description: 'API Gateway endpoint URL',
-      exportName: 'BackspinApiUrl',
+      exportName: 'TopspinApiUrl',
     })
 
     new cdk.CfnOutput(this, 'BackgroundQueueUrl', {
       value: backgroundQueue.queueUrl,
       description: 'Background processing SQS queue URL',
-      exportName: 'BackspinBackgroundQueueUrl',
+      exportName: 'TopspinBackgroundQueueUrl',
     })
   }
 }
