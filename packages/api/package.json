@@ -4,7 +4,7 @@
   "private": true,
   "main": "./src/lambda.ts",
   "scripts": {
-    "build": "esbuild src/lambda.ts --bundle --platform=node --target=node22 --outfile=dist/lambda.js --external:@aws-sdk/* --minify",
+    "build": "esbuild src/lambda.ts src/worker.ts --bundle --platform=node --target=node22 --outdir=dist --minify",
     "dev": "tsx watch src/dev.ts",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
@@ -12,6 +12,8 @@
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@hono/zod-validator": "^0.8.0",
+    "@aws-sdk/client-sqs": "^3.799.0",
+    "@octokit/app": "^15.1.1",
     "@topspin/db": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "better-auth": "^1.2.7",
