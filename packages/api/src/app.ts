@@ -4,6 +4,9 @@ import { auth } from './lib/auth'
 import { requestLogger } from './middleware/logger'
 import { errorHandler, notFoundHandler } from './middleware/error'
 import { health } from './routes/health'
+import { webhooks } from './routes/github/webhooks'
+import { setup } from './routes/github/setup'
+import { installations } from './routes/github/installations'
 
 export const createApp = () => {
   const app = new Hono()
@@ -22,6 +25,10 @@ export const createApp = () => {
   app.route('/health', health)
 
   app.on(['GET', 'POST'], '/api/auth/**', (c) => auth.handler(c.req.raw))
+
+  app.route('/api/github/webhooks', webhooks)
+  app.route('/api/github/setup', setup)
+  app.route('/api/github/installations', installations)
 
   app.onError(errorHandler)
   app.notFound(notFoundHandler)
