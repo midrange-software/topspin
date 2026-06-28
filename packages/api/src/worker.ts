@@ -2,6 +2,7 @@ import 'dotenv/config'
 import type { SQSHandler } from 'aws-lambda'
 import type { SyncJob } from './lib/github/enqueue'
 import { performInitialSync, processWebhookEvent } from './lib/github/sync'
+import { syncJiraConnection, processJiraEvent } from './lib/jira/sync'
 
 export const handler: SQSHandler = async (event) => {
   const failures: Array<{ messageId: string; error: Error }> = []
@@ -14,6 +15,10 @@ export const handler: SQSHandler = async (event) => {
         await performInitialSync(job.installationId)
       } else if (job.type === 'PROCESS_EVENT') {
         await processWebhookEvent(job.eventId)
+      } else if (job.type === 'JIRA_SYNC_CONNECTION') {
+        await syncJiraConnection(job.connectionId)
+      } else if (job.type === 'JIRA_PROCESS_EVENT') {
+        await processJiraEvent(job.eventId)
       }
     } catch (error) {
       console.error(

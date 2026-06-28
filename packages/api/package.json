@@ -4,7 +4,7 @@
   "private": true,
   "main": "./src/lambda.ts",
   "scripts": {
-    "build": "esbuild src/lambda.ts src/worker.ts --bundle --platform=node --target=node22 --outdir=dist --minify",
+    "build": "esbuild src/lambda.ts src/worker.ts src/reconciler.ts --bundle --platform=node --target=node22 --outdir=dist --minify",
     "dev": "tsx watch src/dev.ts",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
