@@ -59,7 +59,8 @@ setup.get(
 
     await enqueueJob({ type: 'INITIAL_SYNC', installationId: installation_id })
 
-    return c.json({ ok: true, message: 'GitHub App installed. Sync started.' })
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+    return c.redirect(`${frontendUrl}/onboarding/connect-jira`)
   }
 )
 
