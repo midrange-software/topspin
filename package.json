@@ -12,6 +12,7 @@
     "db:generate": "pnpm --filter @topspin/db run generate",
     "db:migrate": "pnpm --filter @topspin/db run migrate",
     "dev": "pnpm --filter @topspin/api run dev",
+    "dev:web": "pnpm --filter @topspin/web run dev",
     "cdk": "pnpm --filter infra run cdk"
   },
   "devDependencies": {
