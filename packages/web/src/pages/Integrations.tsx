@@ -86,7 +86,7 @@ function EmptyIntegration({
   )
 }
 
-function DisconnectControls({
+export function DisconnectControls({
   onConfirm,
   isLoading,
 }: {
