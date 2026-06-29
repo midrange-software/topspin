@@ -41,7 +41,7 @@ export function SignUp() {
       setError('root', { message: error.message ?? 'Could not create account' })
       return
     }
-    navigate('/dashboard')
+    navigate('/onboarding/create-org')
   }
 
   return (

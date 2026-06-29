@@ -96,7 +96,8 @@ oauth.get(
       await enqueueJob({ type: 'JIRA_SYNC_CONNECTION', connectionId: connection.id })
     }
 
-    return c.json({ ok: true, cloudName: resource.name })
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+    return c.redirect(`${frontendUrl}/onboarding/sync`)
   }
 )
 
