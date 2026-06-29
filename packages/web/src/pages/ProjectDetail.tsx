@@ -23,11 +23,7 @@ import {
   TableCell,
 } from '@/components/ui/table'
 
-function sprintStateBadgeVariant(state: string): 'default' | 'secondary' | 'outline' {
-  if (state === 'active') return 'default'
-  if (state === 'closed') return 'secondary'
-  return 'outline'
-}
+import { sprintStateBadgeVariant } from '@/lib/formatters'
 
 function formatDate(iso: string | null) {
   if (!iso) return '—'
