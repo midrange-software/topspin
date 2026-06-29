@@ -29,10 +29,30 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, test]
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
