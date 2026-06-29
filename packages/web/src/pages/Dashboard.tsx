@@ -1,13 +1,19 @@
 import { Link } from 'react-router-dom'
 import { Plug } from 'lucide-react'
 import { useGetDashboardSummaryQuery } from '@/api/dashboardApi'
-import { formatHours } from '@/lib/health'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ThroughputChart } from '@/components/dashboard/ThroughputChart'
 import { ProjectCard } from '@/components/dashboard/ProjectCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+
+function formatHours(h: number) {
+  if (h === 0) return '—'
+  if (h < 1) return '<1h'
+  if (h < 24) return `${Math.round(h)}h`
+  return `${Math.round(h / 24)}d`
+}
 
 function DashboardSkeleton() {
   return (
