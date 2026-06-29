@@ -12,6 +12,7 @@ import { SignIn } from '@/pages/auth/SignIn'
 import { SignUp } from '@/pages/auth/SignUp'
 import { Dashboard } from '@/pages/Dashboard'
 import { Projects } from '@/pages/Projects'
+import { ProjectDetail } from '@/pages/ProjectDetail'
 import { Tickets } from '@/pages/Tickets'
 import { Integrations } from '@/pages/Integrations'
 import { Settings } from '@/pages/Settings'
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
               { path: '/', element: <Navigate to="/dashboard" replace /> },
               { path: '/dashboard', element: <Dashboard /> },
               { path: '/projects', element: <Projects /> },
+              { path: '/projects/:projectId', element: <ProjectDetail /> },
               { path: '/tickets', element: <Tickets /> },
               { path: '/integrations', element: <Integrations /> },
               { path: '/settings', element: <Settings /> },
