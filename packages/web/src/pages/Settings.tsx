@@ -23,11 +23,7 @@ import {
 const ROLES = ['owner', 'admin', 'member'] as const
 type OrgRole = (typeof ROLES)[number]
 
-function roleBadgeVariant(role: string): 'default' | 'secondary' | 'outline' {
-  if (role === 'owner') return 'default'
-  if (role === 'admin') return 'secondary'
-  return 'outline'
-}
+import { roleBadgeVariant, nameInitials } from '@/lib/formatters'
 
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString('en-US', {
@@ -35,15 +31,6 @@ function formatDate(date: Date | string) {
     day: 'numeric',
     year: 'numeric',
   })
-}
-
-function nameInitials(name: string) {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
 }
 
 // --- Org Profile ---
