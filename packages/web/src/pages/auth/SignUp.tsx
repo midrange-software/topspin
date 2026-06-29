@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-const schema = z
+export const signUpSchema = z
   .object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email('Enter a valid email'),
@@ -20,7 +20,7 @@ const schema = z
     path: ['confirmPassword'],
   })
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof signUpSchema>
 
 export function SignUp() {
   const navigate = useNavigate()
@@ -29,7 +29,7 @@ export function SignUp() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({ resolver: zodResolver(signUpSchema) })
 
   const onSubmit = async (data: FormData) => {
     const { error } = await authClient.signUp.email({

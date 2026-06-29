@@ -40,7 +40,7 @@ const profileSchema = z.object({
 })
 type ProfileForm = z.infer<typeof profileSchema>
 
-function OrgProfileCard({
+export function OrgProfileCard({
   name,
   slug,
   createdAt,
@@ -313,13 +313,13 @@ export function InvitationsCard({ invitations }: { invitations: Invitation[] }) 
 
 // --- Invite member ---
 
-const inviteSchema = z.object({
+export const inviteMemberSchema = z.object({
   email: z.string().email('Enter a valid email address'),
   role: z.enum(['admin', 'member']),
 })
-type InviteForm = z.infer<typeof inviteSchema>
+type InviteForm = z.infer<typeof inviteMemberSchema>
 
-function InviteMemberCard() {
+export function InviteMemberCard() {
   const {
     register,
     handleSubmit,
@@ -327,7 +327,7 @@ function InviteMemberCard() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<InviteForm>({
-    resolver: zodResolver(inviteSchema),
+    resolver: zodResolver(inviteMemberSchema),
     defaultValues: { role: 'member' },
   })
 

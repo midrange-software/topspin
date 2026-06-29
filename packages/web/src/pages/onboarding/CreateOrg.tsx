@@ -9,11 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-const schema = z.object({
+export const createOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(64),
 })
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof createOrgSchema>
 
 export function CreateOrg() {
   const navigate = useNavigate()
@@ -30,7 +30,7 @@ export function CreateOrg() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({ resolver: zodResolver(createOrgSchema) })
 
   const onSubmit = async (data: FormData) => {
     const slug = data.name
