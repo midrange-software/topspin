@@ -14,6 +14,7 @@ import { Dashboard } from '@/pages/Dashboard'
 import { Projects } from '@/pages/Projects'
 import { ProjectDetail } from '@/pages/ProjectDetail'
 import { Tickets } from '@/pages/Tickets'
+import { TicketDetail } from '@/pages/TicketDetail'
 import { Integrations } from '@/pages/Integrations'
 import { Settings } from '@/pages/Settings'
 
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
               { path: '/projects', element: <Projects /> },
               { path: '/projects/:projectId', element: <ProjectDetail /> },
               { path: '/tickets', element: <Tickets /> },
+              { path: '/tickets/:key', element: <TicketDetail /> },
               { path: '/integrations', element: <Integrations /> },
               { path: '/settings', element: <Settings /> },
             ],
