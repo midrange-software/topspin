@@ -14,7 +14,7 @@ export type HealthScore = {
 }
 
 // Score each dimension 0–100, then weight into a composite
-const scoreCycleTime = (hours: number): number => {
+export const scoreCycleTime = (hours: number): number => {
   // Under 24h = 100, 24h–72h = 80, 72h–168h = 60, 168h–336h = 40, >336h = 20
   if (hours === 0) return 100
   if (hours <= 24) return 100
@@ -24,7 +24,7 @@ const scoreCycleTime = (hours: number): number => {
   return 20
 }
 
-const scoreStaleness = (staleRatio: number): number => {
+export const scoreStaleness = (staleRatio: number): number => {
   // 0% stale = 100, <5% = 90, <15% = 70, <30% = 50, >=30% = 20
   if (staleRatio <= 0) return 100
   if (staleRatio < 0.05) return 90
@@ -33,7 +33,7 @@ const scoreStaleness = (staleRatio: number): number => {
   return 20
 }
 
-const scoreThroughput = (weeklyAvg: number): number => {
+export const scoreThroughput = (weeklyAvg: number): number => {
   // Based on avg tickets completed per week — higher is better, uncapped at 10
   if (weeklyAvg >= 10) return 100
   if (weeklyAvg >= 6) return 80
@@ -42,7 +42,7 @@ const scoreThroughput = (weeklyAvg: number): number => {
   return 20
 }
 
-const scoreReviewLag = (hours: number): number => {
+export const scoreReviewLag = (hours: number): number => {
   if (hours === 0) return 100
   if (hours <= 4) return 100
   if (hours <= 24) return 80
