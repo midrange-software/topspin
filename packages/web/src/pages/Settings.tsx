@@ -114,7 +114,7 @@ type Member = {
   user: { id: string; name: string; email: string; image?: string }
 }
 
-function MemberRow({
+export function MemberRow({
   member,
   currentUserId,
   currentRole,
@@ -253,7 +253,7 @@ type Invitation = {
   createdAt: Date
 }
 
-function InvitationsCard({ invitations }: { invitations: Invitation[] }) {
+export function InvitationsCard({ invitations }: { invitations: Invitation[] }) {
   const [cancelingId, setCancelingId] = useState<string | null>(null)
   const pending = invitations.filter((i) => i.status === 'pending')
   if (pending.length === 0) return null
