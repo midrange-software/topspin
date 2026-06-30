@@ -38,15 +38,14 @@ describe('ProjectCard', () => {
     expect(container.querySelector('.text-amber-600')).not.toBeNull()
   })
 
-  // MVP gap #10 — ProjectCard is not clickable (Dashboard.tsx renders it without a Link wrapper).
-  // The card should navigate to the project detail page when clicked.
-  it.fails('renders the card inside a link to the project detail page', () => {
+  it('renders the card inside a link to the project detail page', () => {
     render(
       <MemoryRouter>
         <ProjectCard project={baseProject} />
       </MemoryRouter>
     )
-    // Currently no <a> element is rendered — the card has no navigation
-    expect(screen.getByRole('link')).not.toBeNull()
+    const link = screen.getByRole('link')
+    expect(link).not.toBeNull()
+    expect((link as HTMLAnchorElement).getAttribute('href')).toBe('/projects/proj-1')
   })
 })

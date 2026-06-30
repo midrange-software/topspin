@@ -1,5 +1,5 @@
 import { computeTicketMetrics } from './tickets'
-import { computePrMetrics } from './prs'
+import { computePrMetrics, type PrMetrics } from './prs'
 
 export type HealthScore = {
   organizationId: string
@@ -53,11 +53,12 @@ export const scoreReviewLag = (hours: number): number => {
 
 export const computeHealthScore = async (
   organizationId: string,
-  projectId: string
+  projectId: string,
+  prMetrics?: PrMetrics
 ): Promise<HealthScore> => {
-  const [ticketMetrics, prMetrics] = await Promise.all([
+  const [ticketMetrics, resolvedPrMetrics] = await Promise.all([
     computeTicketMetrics(projectId),
-    computePrMetrics(organizationId),
+    prMetrics ? Promise.resolve(prMetrics) : computePrMetrics(organizationId),
   ])
 
   const cycleTimeHours = ticketMetrics.cycleTimeHours.median
@@ -66,7 +67,7 @@ export const computeHealthScore = async (
   const weeklyAvg =
     ticketMetrics.throughputByWeek.reduce((sum, w) => sum + w.completed, 0) /
     Math.max(1, ticketMetrics.throughputByWeek.length)
-  const reviewLagHours = prMetrics.reviewLagHours.median
+  const reviewLagHours = resolvedPrMetrics.reviewLagHours.median
 
   const cycleTimeScore = scoreCycleTime(cycleTimeHours)
   const staleScore = scoreStaleness(staleRatio)

@@ -100,7 +100,7 @@ metrics.get('/summary', async (c) => {
     projectRows.map(async (p) => {
       const [ticketMetrics, health] = await Promise.all([
         computeTicketMetrics(p.id),
-        computeHealthScore(activeOrgId, p.id),
+        computeHealthScore(activeOrgId, p.id, prMetrics),
       ])
       return {
         projectId: p.id,

@@ -1,13 +1,14 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { healthColor, formatHours } from '@/lib/health'
+import { healthColor, healthBgColor, formatHours } from '@/lib/health'
 import { useGetDashboardSummaryQuery } from '@/api/dashboardApi'
 import {
   useGetProjectHealthQuery,
   useGetProjectTicketMetricsQuery,
   useGetProjectSprintMetricsQuery,
 } from '@/api/projectsApi'
+import { useGetTicketsQuery } from '@/api/ticketsApi'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ThroughputChart } from '@/components/dashboard/ThroughputChart'
 import { Badge } from '@/components/ui/badge'
@@ -72,6 +73,7 @@ export function ProjectDetail() {
     isLoading: sprintsLoading,
     isError: sprintsError,
   } = useGetProjectSprintMetricsQuery(projectId!)
+  const { data: allTickets } = useGetTicketsQuery({ projectId: projectId! })
 
   const isLoading = healthLoading || ticketsLoading || sprintsLoading
   const isError = healthError || ticketsError || sprintsError
@@ -200,7 +202,7 @@ export function ProjectDetail() {
                         <span className="w-28 text-sm text-muted-foreground">{label}</span>
                         <div className="flex-1 rounded-full bg-muted h-2 overflow-hidden">
                           <div
-                            className={cn('h-full rounded-full', healthColor(score).replace('text-', 'bg-'))}
+                            className={cn('h-full rounded-full', healthBgColor(score))}
                             style={{ width: `${score}%` }}
                           />
                         </div>
@@ -330,6 +332,41 @@ export function ProjectDetail() {
                   </div>
                 </CardContent>
               </Card>
+              {(() => {
+                const staleThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                const staleTickets = (allTickets ?? []).filter(
+                  (t) =>
+                    t.statusCategory.toLowerCase() !== 'done' &&
+                    new Date(t.jiraUpdatedAt) < staleThreshold
+                )
+                return staleTickets.length > 0 ? (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="divide-y">
+                        {staleTickets.map((ticket) => (
+                          <div key={ticket.id} className="flex items-center justify-between py-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                                  {ticket.key}
+                                </span>
+                                <span className="truncate text-sm">{ticket.summary}</span>
+                              </div>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {ticket.assigneeName ?? 'Unassigned'} · last updated{' '}
+                                {new Date(ticket.jiraUpdatedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="ml-3 shrink-0 capitalize">
+                              {ticket.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null
+              })()}
               <Card>
                 <CardContent className="pt-6">
                   <h3 className="text-sm font-semibold">What counts as stale?</h3>
