@@ -38,6 +38,11 @@ export function CreateOrg() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
 
+    if (!slug) {
+      setError('name', { message: 'Name must contain at least one letter or number' })
+      return
+    }
+
     const { data: org, error } = await authClient.organization.create({ name: data.name, slug })
     if (error || !org) {
       setError('root', { message: error?.message ?? 'Could not create organization' })

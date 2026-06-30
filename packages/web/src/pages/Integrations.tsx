@@ -227,7 +227,7 @@ function GitHubInstallationCard({
 }
 
 function GitHubSection({ installUrl }: { installUrl: string | null }) {
-  const { data: installations, isLoading } = useGetGithubInstallationsQuery()
+  const { data: installations, isLoading, isError } = useGetGithubInstallationsQuery()
   const installation = installations?.[0]
 
   if (isLoading) return <SectionSkeleton />
@@ -239,7 +239,7 @@ function GitHubSection({ installUrl }: { installUrl: string | null }) {
           <Github className="h-5 w-5" />
           <CardTitle className="text-base">GitHub</CardTitle>
         </div>
-        {!installation && installUrl && (
+        {!isError && !installation && installUrl && (
           <a href={installUrl}>
             <Button size="sm">
               <Github className="mr-2 h-4 w-4" />
@@ -249,7 +249,9 @@ function GitHubSection({ installUrl }: { installUrl: string | null }) {
         )}
       </CardHeader>
       <CardContent>
-        {installation ? (
+        {isError ? (
+          <p className="text-sm text-destructive">Failed to load GitHub status. Please refresh.</p>
+        ) : installation ? (
           <GitHubInstallationCard installation={installation} installUrl={installUrl} />
         ) : (
           <EmptyIntegration
@@ -398,7 +400,7 @@ function JiraConnectionCard({
 }
 
 function JiraSection({ jiraConnectUrl }: { jiraConnectUrl: string | null }) {
-  const { data: connections, isLoading } = useGetJiraConnectionsQuery()
+  const { data: connections, isLoading, isError } = useGetJiraConnectionsQuery()
   const connection = connections?.[0]
 
   if (isLoading) return <SectionSkeleton />
@@ -410,14 +412,16 @@ function JiraSection({ jiraConnectUrl }: { jiraConnectUrl: string | null }) {
           <Link2 className="h-5 w-5" />
           <CardTitle className="text-base">Jira</CardTitle>
         </div>
-        {!connection && jiraConnectUrl && (
+        {!isError && !connection && jiraConnectUrl && (
           <a href={jiraConnectUrl}>
             <Button size="sm">Connect Jira</Button>
           </a>
         )}
       </CardHeader>
       <CardContent>
-        {connection ? (
+        {isError ? (
+          <p className="text-sm text-destructive">Failed to load Jira status. Please refresh.</p>
+        ) : connection ? (
           <JiraConnectionCard connection={connection} jiraConnectUrl={jiraConnectUrl} />
         ) : (
           <EmptyIntegration

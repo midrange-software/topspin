@@ -223,12 +223,14 @@ export function ProjectDetail() {
         <TabsContent value="tickets">
           {tickets && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                <MetricCard label="Total" value={tickets.totalTickets} />
-                <MetricCard label="Open" value={tickets.openTickets} />
-                <MetricCard label="In Progress" value={tickets.inProgressTickets} />
-                <MetricCard label="Done" value={tickets.doneTickets} />
-                <MetricCard label="Stale" value={tickets.staleTickets} />
+              <div className="flex items-center justify-between">
+                <div className="grid flex-1 grid-cols-2 gap-4 lg:grid-cols-5">
+                  <MetricCard label="Total" value={tickets.totalTickets} />
+                  <MetricCard label="Open" value={tickets.openTickets} />
+                  <MetricCard label="In Progress" value={tickets.inProgressTickets} />
+                  <MetricCard label="Done" value={tickets.doneTickets} />
+                  <MetricCard label="Stale" value={tickets.staleTickets} />
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <MetricCard
@@ -250,6 +252,14 @@ export function ProjectDetail() {
                 title="Ticket Throughput — completed per week"
                 valueLabel="Completed"
               />
+              <div className="flex justify-end">
+                <Link
+                  to={`/tickets?projectId=${projectId}`}
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >
+                  View all tickets →
+                </Link>
+              </div>
             </div>
           )}
         </TabsContent>

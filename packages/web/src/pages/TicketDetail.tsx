@@ -190,7 +190,12 @@ export function TicketDetail() {
                   </MetaField>
                   {ticket.epicKey && (
                     <MetaField label="Epic">
-                      <span className="font-mono text-xs">{ticket.epicKey}</span>
+                      <Link
+                        to={`/tickets/${ticket.epicKey}`}
+                        className="font-mono text-xs hover:underline"
+                      >
+                        {ticket.epicKey}
+                      </Link>
                     </MetaField>
                   )}
                   {ticket.parentKey && (
