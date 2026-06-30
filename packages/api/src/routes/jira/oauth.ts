@@ -7,6 +7,7 @@ import { jiraConnections, organizations } from '@topspin/db/schema'
 import { auth } from '../../lib/auth'
 import { exchangeCodeForTokens, getAccessibleResources } from '../../lib/jira/client'
 import { enqueueJob } from '../../lib/github/enqueue'
+import { getFrontendUrl } from '../../lib/config'
 
 const oauth = new Hono()
 
@@ -96,7 +97,7 @@ oauth.get(
       await enqueueJob({ type: 'JIRA_SYNC_CONNECTION', connectionId: connection.id })
     }
 
-    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+    const frontendUrl = getFrontendUrl()
     return c.redirect(`${frontendUrl}/onboarding/sync`)
   }
 )
