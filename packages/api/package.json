@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.1076.0",
     "@aws-sdk/client-sqs": "^3.799.0",
     "@hono/node-server": "^1.13.7",
     "@hono/zod-validator": "^0.8.0",
