@@ -11,6 +11,7 @@ vi.mock('@/lib/auth-client', () => ({
 vi.mock('react-router-dom', () => ({
   Navigate: ({ to }: { to: string }) => <div data-testid="navigate" data-to={to} />,
   Outlet: () => <div data-testid="outlet" />,
+  useLocation: () => ({ pathname: '/dashboard' }),
 }))
 
 beforeEach(() => vi.clearAllMocks())
@@ -28,7 +29,7 @@ describe('ProtectedRoute', () => {
     mockUseSession.mockReturnValue({ data: null, isPending: false })
     render(<ProtectedRoute />)
     const nav = screen.getByTestId('navigate')
-    expect(nav.getAttribute('data-to')).toBe('/signin')
+    expect(nav.getAttribute('data-to')).toBe('/signin?next=%2Fdashboard')
   })
 
   it('renders the outlet when a session exists', () => {
