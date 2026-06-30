@@ -8,6 +8,7 @@ import { CreateOrg } from '@/pages/onboarding/CreateOrg'
 import { ConnectGitHub } from '@/pages/onboarding/ConnectGitHub'
 import { ConnectJira } from '@/pages/onboarding/ConnectJira'
 import { SyncProgress } from '@/pages/onboarding/SyncProgress'
+import { AcceptInvitation } from '@/pages/auth/AcceptInvitation'
 import { SignIn } from '@/pages/auth/SignIn'
 import { SignUp } from '@/pages/auth/SignUp'
 import { Dashboard } from '@/pages/Dashboard'
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/accept-invitation', element: <AcceptInvitation /> },
       {
         element: <OnboardingLayout />,
         children: [

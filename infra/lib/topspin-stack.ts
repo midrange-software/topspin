@@ -50,12 +50,12 @@ export class TopspinStack extends cdk.Stack {
     // ── Shared environment ─────────────────────────────────────────────────────
     const sharedEnv: Record<string, string> = {
       NODE_ENV: 'production',
-      DATABASE_URL: dbUrlSecret.secretValue.unsafeUnwrap(),
-      BETTER_AUTH_SECRET: authSecret.secretValue.unsafeUnwrap(),
-      GITHUB_APP_ID: githubAppIdSecret.secretValue.unsafeUnwrap(),
-      GITHUB_APP_PRIVATE_KEY: githubPrivateKeySecret.secretValue.unsafeUnwrap(),
-      JIRA_CLIENT_ID: jiraClientIdSecret.secretValue.unsafeUnwrap(),
-      JIRA_CLIENT_SECRET: jiraClientSecretSecret.secretValue.unsafeUnwrap(),
+      DATABASE_URL_SECRET_ARN: dbUrlSecret.secretArn,
+      BETTER_AUTH_SECRET_ARN: authSecret.secretArn,
+      GITHUB_APP_ID_SECRET_ARN: githubAppIdSecret.secretArn,
+      GITHUB_APP_PRIVATE_KEY_SECRET_ARN: githubPrivateKeySecret.secretArn,
+      JIRA_CLIENT_ID_SECRET_ARN: jiraClientIdSecret.secretArn,
+      JIRA_CLIENT_SECRET_SECRET_ARN: jiraClientSecretSecret.secretArn,
     }
 
     const grantSharedSecretRead = (fn: lambda.Function) => {
@@ -107,7 +107,7 @@ export class TopspinStack extends cdk.Stack {
       }),
       environment: {
         NODE_ENV: 'production',
-        DATABASE_URL: dbUrlSecret.secretValue.unsafeUnwrap(),
+        DATABASE_URL_SECRET_ARN: dbUrlSecret.secretArn,
         BACKGROUND_QUEUE_URL: backgroundQueue.queueUrl,
       },
     })
@@ -137,7 +137,7 @@ export class TopspinStack extends cdk.Stack {
       }),
       environment: {
         ...sharedEnv,
-        GITHUB_WEBHOOK_SECRET: githubWebhookSecret.secretValue.unsafeUnwrap(),
+        GITHUB_WEBHOOK_SECRET_ARN: githubWebhookSecret.secretArn,
         BACKGROUND_QUEUE_URL: backgroundQueue.queueUrl,
       },
     })

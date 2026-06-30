@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,8 @@ type FormData = z.infer<typeof signInSchema>
 
 export function SignIn() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next') ?? '/dashboard'
   const {
     register,
     handleSubmit,
@@ -33,7 +35,7 @@ export function SignIn() {
       setError('root', { message: error.message ?? 'Invalid credentials' })
       return
     }
-    navigate('/dashboard')
+    navigate(next)
   }
 
   return (
