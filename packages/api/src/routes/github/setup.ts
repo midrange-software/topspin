@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@topspin/db'
-import { githubInstallations, organizations } from '@topspin/db/schema'
+import { githubInstallations, members, organizations } from '@topspin/db/schema'
 import { auth } from '../../lib/auth'
 import { enqueueJob } from '../../lib/github/enqueue'
 import { getFrontendUrl } from '../../lib/config'
@@ -34,6 +34,13 @@ setup.get(
       .where(eq(organizations.id, organizationId))
 
     if (!org) return c.json({ error: 'Organization not found' }, 404)
+
+    const [membership] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.organizationId, organizationId), eq(members.userId, session.user.id)))
+
+    if (!membership) return c.json({ error: 'Forbidden' }, 403)
 
     // Get account info from the GitHub App
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

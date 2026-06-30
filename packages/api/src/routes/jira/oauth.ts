@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@topspin/db'
-import { jiraConnections, organizations } from '@topspin/db/schema'
+import { jiraConnections, members, organizations } from '@topspin/db/schema'
 import { auth } from '../../lib/auth'
 import { exchangeCodeForTokens, getAccessibleResources } from '../../lib/jira/client'
 import { enqueueJob } from '../../lib/github/enqueue'
@@ -27,12 +27,28 @@ oauth.get(
     if (!session) return c.json({ error: 'Unauthorized' }, 401)
 
     const { state } = c.req.valid('query')
+    const organizationId = state
+
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+
+    if (!org) return c.json({ error: 'Organization not found' }, 404)
+
+    const [membership] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.organizationId, organizationId), eq(members.userId, session.user.id)))
+
+    if (!membership) return c.json({ error: 'Forbidden' }, 403)
+
     const params = new URLSearchParams({
       audience: 'api.atlassian.com',
       client_id: process.env.JIRA_CLIENT_ID!,
       scope: SCOPES,
       redirect_uri: `${process.env.API_URL}/api/jira/callback`,
-      state,
+      state: organizationId,
       response_type: 'code',
       prompt: 'consent',
     })
@@ -57,6 +73,13 @@ oauth.get(
       .where(eq(organizations.id, organizationId))
 
     if (!org) return c.json({ error: 'Organization not found' }, 404)
+
+    const [membership] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.organizationId, organizationId), eq(members.userId, session.user.id)))
+
+    if (!membership) return c.json({ error: 'Forbidden' }, 403)
 
     const tokens = await exchangeCodeForTokens(code)
     const resources = await getAccessibleResources(tokens.access_token)

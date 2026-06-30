@@ -7,8 +7,15 @@ import { githubInstallations, jiraConnections } from '@topspin/db/schema'
 import { performInitialSync, processWebhookEvent } from './lib/github/sync'
 import { syncJiraConnection, processJiraEvent } from './lib/jira/sync'
 import { correlateOrganization } from './lib/correlation/correlate'
+import { loadSecrets } from './lib/secrets'
+
+let initialized = false
 
 export const handler: SQSHandler = async (event) => {
+  if (!initialized) {
+    await loadSecrets()
+    initialized = true
+  }
   const failures: Array<{ messageId: string; error: Error }> = []
 
   for (const record of event.Records) {
