@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -199,12 +200,21 @@ function MembersCard({
 
   const handleRemove = async (member: Member) => {
     setRemovingId(member.id)
-    await authClient.organization.removeMember({ memberIdOrEmail: member.id })
-    setRemovingId(null)
+    try {
+      await authClient.organization.removeMember({ memberIdOrEmail: member.id })
+    } catch {
+      toast.error('Failed to remove member. Please try again.')
+    } finally {
+      setRemovingId(null)
+    }
   }
 
   const handleRoleChange = async (member: Member, role: OrgRole) => {
-    await authClient.organization.updateMemberRole({ memberId: member.id, role })
+    try {
+      await authClient.organization.updateMemberRole({ memberId: member.id, role })
+    } catch {
+      toast.error('Failed to update role. Please try again.')
+    }
   }
 
   return (
@@ -260,8 +270,13 @@ export function InvitationsCard({ invitations }: { invitations: Invitation[] }) 
 
   const handleCancel = async (invitationId: string) => {
     setCancelingId(invitationId)
-    await authClient.organization.cancelInvitation({ invitationId })
-    setCancelingId(null)
+    try {
+      await authClient.organization.cancelInvitation({ invitationId })
+    } catch {
+      toast.error('Failed to cancel invitation. Please try again.')
+    } finally {
+      setCancelingId(null)
+    }
   }
 
   return (

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { toast } from 'sonner'
 import { Github, CheckCircle2, Clock, AlertCircle, ExternalLink, Link2 } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import {
@@ -90,7 +91,7 @@ export function DisconnectControls({
   onConfirm,
   isLoading,
 }: {
-  onConfirm: () => void
+  onConfirm: () => void | Promise<void>
   isLoading: boolean
 }) {
   const [confirming, setConfirming] = useState(false)
@@ -178,7 +179,13 @@ function GitHubInstallationCard({
             </a>
           )}
           <DisconnectControls
-            onConfirm={() => deleteInstallation(installation.id)}
+            onConfirm={async () => {
+              try {
+                await deleteInstallation(installation.id).unwrap()
+              } catch {
+                toast.error('Failed to disconnect GitHub. Please try again.')
+              }
+            }}
             isLoading={isDeleting}
           />
         </div>
@@ -342,7 +349,13 @@ function JiraConnectionCard({
             </a>
           )}
           <DisconnectControls
-            onConfirm={() => deleteConnection(connection.id)}
+            onConfirm={async () => {
+              try {
+                await deleteConnection(connection.id).unwrap()
+              } catch {
+                toast.error('Failed to disconnect Jira. Please try again.')
+              }
+            }}
             isLoading={isDeleting}
           />
         </div>

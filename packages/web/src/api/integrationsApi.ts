@@ -33,7 +33,7 @@ export const integrationsApi = baseApi.injectEndpoints({
     }),
     deleteGithubInstallation: build.mutation<{ ok: boolean }, string>({
       query: (id) => ({ url: `/github/installations/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['Integration'],
+      invalidatesTags: ['Integration', 'Project', 'Metrics'],
     }),
     getConnectionProjects: build.query<JiraProject[], string>({
       query: (id) => `/jira/connections/${id}/projects`,
@@ -41,7 +41,7 @@ export const integrationsApi = baseApi.injectEndpoints({
     }),
     deleteJiraConnection: build.mutation<{ ok: boolean }, string>({
       query: (id) => ({ url: `/jira/connections/${id}`, method: 'DELETE' }),
-      invalidatesTags: ['Integration'],
+      invalidatesTags: ['Integration', 'Project', 'Metrics'],
     }),
   }),
 })

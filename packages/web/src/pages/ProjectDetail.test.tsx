@@ -5,11 +5,12 @@ import { MemoryRouter } from 'react-router-dom'
 import { ProjectDetail } from './ProjectDetail'
 import type { HealthScore, TicketMetrics, SprintMetrics } from '@/api/projectsApi'
 
-const { mockUseHealth, mockUseTickets, mockUseSprints, mockUseDashboard } = vi.hoisted(() => ({
+const { mockUseHealth, mockUseTickets, mockUseSprints, mockUseDashboard, mockUseAllTickets } = vi.hoisted(() => ({
   mockUseHealth: vi.fn(),
   mockUseTickets: vi.fn(),
   mockUseSprints: vi.fn(),
   mockUseDashboard: vi.fn(),
+  mockUseAllTickets: vi.fn(),
 }))
 
 vi.mock('react-router-dom', async (importOriginal) => {
@@ -27,6 +28,10 @@ vi.mock('@/api/projectsApi', () => ({
   useGetProjectSprintMetricsQuery: mockUseSprints,
 }))
 
+vi.mock('@/api/ticketsApi', () => ({
+  useGetTicketsQuery: mockUseAllTickets,
+}))
+
 vi.mock('@/components/dashboard/ThroughputChart', () => ({
   ThroughputChart: () => null,
 }))
@@ -34,6 +39,7 @@ vi.mock('@/components/dashboard/ThroughputChart', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   mockUseDashboard.mockReturnValue({ data: undefined })
+  mockUseAllTickets.mockReturnValue({ data: undefined })
 })
 
 const mockHealth: HealthScore = {
@@ -110,11 +116,8 @@ describe('ProjectDetail', () => {
     expect(screen.queryByText('Failed to load project data. Please refresh.')).not.toBeNull()
   })
 
-  // Bug 1 — healthColor().replace('text-', 'bg-') only replaces the first occurrence;
-  // dark:text-emerald-400 remains instead of becoming dark:bg-emerald-400
-  it.fails('score breakdown bars use dark:bg- classes (not dark:text-) in dark mode', () => {
+  it('score breakdown bars use dark:bg- classes (not dark:text-) in dark mode', () => {
     const { container } = renderLoaded()
-    // Without the bug fix, no element has dark:bg-emerald in its class
     const barWithDarkBg = container.querySelector('[class*="dark:bg-emerald"]')
     expect(barWithDarkBg).not.toBeNull()
   })

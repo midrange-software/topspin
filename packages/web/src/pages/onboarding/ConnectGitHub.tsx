@@ -5,6 +5,7 @@ import { authClient } from '@/lib/auth-client'
 import { useGetGithubInstallationsQuery } from '@/api/onboardingApi'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function ConnectGitHub() {
   const navigate = useNavigate()
@@ -24,7 +25,14 @@ export function ConnectGitHub() {
       ? `https://github.com/apps/${appSlug}/installations/new?state=${activeOrgId}`
       : null
 
-  if (isLoading) return null
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-3/4" />
+      </div>
+    )
+  }
 
   return (
     <Card>

@@ -83,42 +83,43 @@ oauth.get(
 
     const tokens = await exchangeCodeForTokens(code)
     const resources = await getAccessibleResources(tokens.access_token)
-    const resource = resources[0]
 
-    if (!resource) return c.json({ error: 'No Jira site accessible' }, 400)
+    if (resources.length === 0) return c.json({ error: 'No Jira site accessible' }, 400)
 
-    const webhookSecret = crypto.randomUUID()
+    for (const resource of resources) {
+      const webhookSecret = crypto.randomUUID()
 
-    const [connection] = await db
-      .insert(jiraConnections)
-      .values({
-        id: crypto.randomUUID(),
-        organizationId,
-        cloudId: resource.id,
-        cloudUrl: resource.url,
-        cloudName: resource.name,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
-        scopes: SCOPES,
-        webhookSecret,
-      })
-      .onConflictDoUpdate({
-        target: [jiraConnections.organizationId, jiraConnections.cloudId],
-        set: {
+      const [connection] = await db
+        .insert(jiraConnections)
+        .values({
+          id: crypto.randomUUID(),
+          organizationId,
+          cloudId: resource.id,
+          cloudUrl: resource.url,
+          cloudName: resource.name,
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
           accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+          scopes: SCOPES,
           webhookSecret,
-          suspended: false,
-          updatedAt: new Date(),
-        },
-      })
-      .returning()
+        })
+        .onConflictDoUpdate({
+          target: [jiraConnections.organizationId, jiraConnections.cloudId],
+          set: {
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token,
+            accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+            webhookSecret,
+            suspended: false,
+            updatedAt: new Date(),
+          },
+        })
+        .returning()
 
-    if (connection) {
-      await registerJiraWebhook(connection.id, webhookSecret)
-      await enqueueJob({ type: 'JIRA_SYNC_CONNECTION', connectionId: connection.id })
+      if (connection) {
+        await registerJiraWebhook(connection.id, webhookSecret)
+        await enqueueJob({ type: 'JIRA_SYNC_CONNECTION', connectionId: connection.id })
+      }
     }
 
     const frontendUrl = getFrontendUrl()
