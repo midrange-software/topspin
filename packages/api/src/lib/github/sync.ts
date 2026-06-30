@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@topspin/db'
 import {
   githubInstallations,
@@ -75,6 +75,34 @@ const syncBranches = async (octokit: any, repoDbId: string, owner: string, repo:
           target: [branches.repositoryId, branches.name],
           set: { sha: branch.commit.sha, protected: branch.protected, updatedAt: new Date() },
         })
+    }
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const syncCommits = async (octokit: any, repoDbId: string, owner: string, repo: string, defaultBranch: string) => {
+  const pages = octokit.paginate.iterator(octokit.rest.repos.listCommits, {
+    owner,
+    repo,
+    sha: defaultBranch,
+    per_page: 100,
+  })
+
+  for await (const page of pages) {
+    for (const commit of page.data) {
+      await db
+        .insert(commits)
+        .values({
+          id: crypto.randomUUID(),
+          repositoryId: repoDbId,
+          sha: commit.sha,
+          message: commit.commit.message,
+          authorName: commit.commit.author?.name ?? null,
+          authorEmail: commit.commit.author?.email ?? null,
+          authorLogin: commit.author?.login ?? null,
+          committedAt: new Date(commit.commit.author?.date ?? commit.commit.committer?.date ?? Date.now()),
+        })
+        .onConflictDoNothing()
     }
   }
 }
@@ -223,6 +251,7 @@ export const performInitialSync = async (installationId: number) => {
 
       const [owner, name] = repo.full_name.split('/')
       await syncBranches(octokit, repoRow.id, owner, name)
+      await syncCommits(octokit, repoRow.id, owner, name, repo.default_branch)
       await syncPullRequests(octokit, repoRow.id, owner, name)
     }
   }
@@ -233,7 +262,7 @@ export const performInitialSync = async (installationId: number) => {
     .where(eq(githubInstallations.id, installation.id))
 }
 
-export const processWebhookEvent = async (eventId: string) => {
+export const processWebhookEvent = async (eventId: string): Promise<string | null> => {
   const [event] = await db
     .select()
     .from(githubEvents)
@@ -243,6 +272,7 @@ export const processWebhookEvent = async (eventId: string) => {
 
   try {
     const payload = JSON.parse(event.payload)
+    let prId: string | null = null
 
     switch (event.event) {
       case 'installation':
@@ -255,7 +285,7 @@ export const processWebhookEvent = async (eventId: string) => {
         await handlePushEvent(payload)
         break
       case 'pull_request':
-        await handlePullRequestEvent(payload)
+        prId = await handlePullRequestEvent(payload)
         break
       case 'pull_request_review':
         await handlePullRequestReviewEvent(payload)
@@ -269,6 +299,8 @@ export const processWebhookEvent = async (eventId: string) => {
       .update(githubEvents)
       .set({ processedAt: new Date() })
       .where(eq(githubEvents.id, eventId))
+
+    return prId
   } catch (err) {
     await db
       .update(githubEvents)
@@ -349,6 +381,10 @@ const handlePushEvent = async (payload: {
   if (!repo) return
 
   const branchName = payload.ref?.replace('refs/heads/', '')
+  if (branchName && payload.after === '0000000000000000000000000000000000000000') {
+    await db.delete(branches).where(and(eq(branches.repositoryId, repo.id), eq(branches.name, branchName)))
+    return
+  }
   if (branchName && payload.after) {
     await db
       .insert(branches)
@@ -402,16 +438,16 @@ const handlePullRequestEvent = async (payload: {
     updated_at: string
   }
   repository?: { full_name: string }
-}) => {
+}): Promise<string | null> => {
   const fullName = payload.repository?.full_name
-  if (!fullName) return
+  if (!fullName) return null
 
   const [repo] = await db
     .select()
     .from(repositories)
     .where(eq(repositories.fullName, fullName))
 
-  if (!repo) return
+  if (!repo) return null
 
   const pr = payload.pull_request
   const state = pr.merged_at ? 'merged' : pr.state
@@ -456,6 +492,9 @@ const handlePullRequestEvent = async (payload: {
         updatedAt: new Date(),
       },
     })
+
+  const [prRow] = await db.select({ id: pullRequests.id }).from(pullRequests).where(eq(pullRequests.githubId, pr.id))
+  return prRow?.id ?? null
 }
 
 const handlePullRequestReviewEvent = async (payload: {
