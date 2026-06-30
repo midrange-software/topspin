@@ -111,10 +111,9 @@ describe('GET /callback — Jira OAuth', () => {
     }
   )
 
-  // MVP Gap #4 — webhook secret lost on Jira reconnect (routes/jira/oauth.ts:82-91)
-  // onConflictDoUpdate.set does not include webhookSecret, so a reconnect silently
-  // rotates the webhook URL secret without updating the DB record.
-  it.fails(
+  // Fix 1 — webhook secret was lost on Jira reconnect (routes/jira/oauth.ts)
+  // onConflictDoUpdate.set now includes webhookSecret so reconnects persist the new secret.
+  it(
     'persists the new webhookSecret in onConflictDoUpdate.set when reconnecting',
     async () => {
       mockGetSession.mockResolvedValue(sessionForOrg('org-1'))

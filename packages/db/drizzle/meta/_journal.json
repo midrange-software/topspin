@@ -8,6 +8,13 @@
       "when": 1782784024110,
       "tag": "0000_zippy_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782790326002,
+      "tag": "0001_amazing_stick",
+      "breakpoints": true
     }
   ]
 }

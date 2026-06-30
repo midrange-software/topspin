@@ -109,6 +109,7 @@ oauth.get(
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
           accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+          webhookSecret,
           suspended: false,
           updatedAt: new Date(),
         },

@@ -11,6 +11,17 @@ import {
 } from '@topspin/db/schema'
 import { JiraClient } from './client'
 
+function deriveStatusCategory(statusName: string): string {
+  const lower = statusName.toLowerCase()
+  if (['done', 'closed', 'resolved', 'complete', 'completed', 'cancelled', 'canceled', 'rejected'].some(s => lower.includes(s))) {
+    return 'Done'
+  }
+  if (['progress', 'review', 'development', 'testing', 'qa', 'blocked', 'active'].some(s => lower.includes(s))) {
+    return 'In Progress'
+  }
+  return 'To Do'
+}
+
 type JiraProject = {
   id: string
   key: string
@@ -79,12 +90,12 @@ const upsertStatusHistory = async (ticketDbId: string, issue: JiraIssue) => {
           fromStatus: item.fromString ?? null,
           toStatus: item.toString ?? '',
           fromStatusCategory: null,
-          toStatusCategory: issue.fields.status.statusCategory.name,
+          toStatusCategory: deriveStatusCategory(item.toString ?? ''),
           authorAccountId: history.author.accountId,
           authorName: history.author.displayName,
           changedAt: new Date(history.created),
         })
-        .onConflictDoNothing()
+        .onConflictDoNothing({ target: [jiraStatusHistory.ticketId, jiraStatusHistory.changedAt, jiraStatusHistory.toStatus] })
     }
   }
 }
@@ -341,20 +352,46 @@ const handleSprintEvent = async (sprint: JiraSprint & { originBoardId?: number }
     .from(jiraSprints)
     .where(eq(jiraSprints.sprintId, sprint.id))
 
-  if (!existing) return
+  if (existing) {
+    await db
+      .update(jiraSprints)
+      .set({
+        name: sprint.name,
+        state: sprint.state,
+        goal: sprint.goal ?? null,
+        startDate: sprint.startDate ? new Date(sprint.startDate) : null,
+        endDate: sprint.endDate ? new Date(sprint.endDate) : null,
+        completeDate: sprint.completeDate ? new Date(sprint.completeDate) : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(jiraSprints.sprintId, sprint.id))
+    return
+  }
+
+  // Sprint doesn't exist yet (sprint_created event) — insert it
+  if (!sprint.originBoardId) return
+
+  const [project] = await db
+    .select()
+    .from(jiraProjects)
+    .where(eq(jiraProjects.boardId, sprint.originBoardId))
+
+  if (!project) return
 
   await db
-    .update(jiraSprints)
-    .set({
+    .insert(jiraSprints)
+    .values({
+      id: crypto.randomUUID(),
+      projectId: project.id,
+      sprintId: sprint.id,
       name: sprint.name,
       state: sprint.state,
       goal: sprint.goal ?? null,
       startDate: sprint.startDate ? new Date(sprint.startDate) : null,
       endDate: sprint.endDate ? new Date(sprint.endDate) : null,
       completeDate: sprint.completeDate ? new Date(sprint.completeDate) : null,
-      updatedAt: new Date(),
     })
-    .where(eq(jiraSprints.sprintId, sprint.id))
+    .onConflictDoNothing()
 }
 
 export const linkTicketsToSprints = async (connectionId: string) => {

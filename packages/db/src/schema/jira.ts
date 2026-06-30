@@ -101,20 +101,26 @@ export const jiraTicketSprints = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.ticketId, t.sprintId] }) })
 )
 
-export const jiraStatusHistory = pgTable('jira_status_history', {
-  id: text('id').primaryKey(),
-  ticketId: text('ticket_id')
-    .notNull()
-    .references(() => jiraTickets.id, { onDelete: 'cascade' }),
-  fromStatus: text('from_status'),
-  toStatus: text('to_status').notNull(),
-  fromStatusCategory: text('from_status_category'),
-  toStatusCategory: text('to_status_category').notNull(),
-  authorAccountId: text('author_account_id'),
-  authorName: text('author_name'),
-  changedAt: timestamp('changed_at').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-})
+export const jiraStatusHistory = pgTable(
+  'jira_status_history',
+  {
+    id: text('id').primaryKey(),
+    ticketId: text('ticket_id')
+      .notNull()
+      .references(() => jiraTickets.id, { onDelete: 'cascade' }),
+    fromStatus: text('from_status'),
+    toStatus: text('to_status').notNull(),
+    fromStatusCategory: text('from_status_category'),
+    toStatusCategory: text('to_status_category').notNull(),
+    authorAccountId: text('author_account_id'),
+    authorName: text('author_name'),
+    changedAt: timestamp('changed_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => ({
+    uniq: unique('jira_status_history_ticket_changed_status_unique').on(t.ticketId, t.changedAt, t.toStatus),
+  })
+)
 
 export const jiraEvents = pgTable('jira_event', {
   id: text('id').primaryKey(),

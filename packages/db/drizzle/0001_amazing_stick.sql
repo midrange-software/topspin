@@ -1,0 +1,1 @@
+ALTER TABLE "jira_status_history" ADD CONSTRAINT "jira_status_history_ticket_changed_status_unique" UNIQUE("ticket_id","changed_at","to_status");
