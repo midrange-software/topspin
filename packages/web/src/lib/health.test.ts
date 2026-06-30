@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { healthColor, formatHours } from './health'
+import { healthColor, healthBgColor, formatHours } from './health'
 
 describe('healthColor', () => {
   it('returns emerald at score 100', () => {
@@ -35,6 +35,39 @@ describe('healthColor', () => {
       expect(healthColor(85).replace('text-', 'bg-')).toBe('bg-emerald-600 dark:bg-emerald-400')
     }
   )
+})
+
+describe('healthBgColor', () => {
+  it('returns emerald bg at score 100', () => {
+    expect(healthBgColor(100)).toBe('bg-emerald-600 dark:bg-emerald-400')
+  })
+
+  it('returns emerald bg at the 80 boundary', () => {
+    expect(healthBgColor(80)).toBe('bg-emerald-600 dark:bg-emerald-400')
+  })
+
+  it('returns amber bg just below 80', () => {
+    expect(healthBgColor(79)).toBe('bg-amber-500 dark:bg-amber-400')
+  })
+
+  it('returns amber bg at the 60 boundary', () => {
+    expect(healthBgColor(60)).toBe('bg-amber-500 dark:bg-amber-400')
+  })
+
+  it('returns red bg just below 60', () => {
+    expect(healthBgColor(59)).toBe('bg-red-500 dark:bg-red-400')
+  })
+
+  it('returns red bg at score 0', () => {
+    expect(healthBgColor(0)).toBe('bg-red-500 dark:bg-red-400')
+  })
+
+  it('uses bg- prefix for all variants (no text- prefix leaks into dark mode)', () => {
+    const result = healthBgColor(85)
+    expect(result).toContain('bg-')
+    expect(result).not.toContain('text-')
+    expect(result).toContain('dark:bg-')
+  })
 })
 
 describe('formatHours', () => {

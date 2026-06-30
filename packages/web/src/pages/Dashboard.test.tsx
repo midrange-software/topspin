@@ -93,8 +93,7 @@ describe('Dashboard', () => {
     expect(screen.queryByText('Open PRs')).not.toBeNull()
   })
 
-  // MVP gap #10 / Bug 2 — ProjectCard is not wrapped in a Link; clicking a card does not navigate
-  it.fails('each ProjectCard links to the project detail page', () => {
+  it('each ProjectCard links to the project detail page', () => {
     mockUseDashboard.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -106,8 +105,8 @@ describe('Dashboard', () => {
       },
     })
     renderDashboard()
-    // Currently no <a> wraps the card — Dashboard.tsx renders <ProjectCard /> without a Link
     const link = screen.queryByRole('link', { name: /test project/i })
     expect(link).not.toBeNull()
+    expect((link as HTMLAnchorElement).getAttribute('href')).toBe('/projects/proj-1')
   })
 })

@@ -4,6 +4,7 @@ import { authClient } from '@/lib/auth-client'
 import { useGetJiraConnectionsQuery } from '@/api/onboardingApi'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function ConnectJira() {
   const navigate = useNavigate()
@@ -19,7 +20,14 @@ export function ConnectJira() {
   const activeOrgId = session?.session.activeOrganizationId
   const jiraConnectUrl = activeOrgId ? `/api/jira/connect?state=${activeOrgId}` : null
 
-  if (isLoading) return null
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-3/4" />
+      </div>
+    )
+  }
 
   return (
     <Card>
