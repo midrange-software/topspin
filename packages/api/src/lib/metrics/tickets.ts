@@ -46,6 +46,7 @@ export const computeTicketMetrics = async (projectId: string): Promise<TicketMet
   // Cycle time: first "In Progress" → first "Done" for each ticket
   const ticketIds = tickets.map((t) => t.id)
   const cycleTimes: number[] = []
+  const doneTransitionAt = new Map<string, Date>()
 
   if (ticketIds.length > 0) {
     const histories = await db
@@ -76,6 +77,16 @@ export const computeTicketMetrics = async (projectId: string): Promise<TicketMet
         cycleTimes.push(entry.doneAt.getTime() - entry.inProgressAt.getTime())
       }
     }
+
+    // Build map of first "Done" transition date per ticket for throughput fallback
+    for (const h of histories) {
+      if (h.toStatusCategory.toLowerCase() === 'done') {
+        const existing = doneTransitionAt.get(h.ticketId)
+        if (!existing || h.changedAt < existing) {
+          doneTransitionAt.set(h.ticketId, h.changedAt)
+        }
+      }
+    }
   }
 
   cycleTimes.sort((a, b) => a - b)
@@ -90,15 +101,19 @@ export const computeTicketMetrics = async (projectId: string): Promise<TicketMet
   }
 
   const twelveWeeksAgo = weeks[0].weekStart
-  const doneTicketsWithDate = tickets.filter(
-    (t) => t.statusCategory.toLowerCase() === 'done' && t.resolvedAt && t.resolvedAt >= twelveWeeksAgo
-  )
+  const doneTicketsWithDate = tickets
+    .filter((t) => t.statusCategory.toLowerCase() === 'done')
+    .map((t) => ({
+      ...t,
+      completedAt: t.resolvedAt ?? doneTransitionAt.get(t.id) ?? null,
+    }))
+    .filter((t) => t.completedAt && t.completedAt >= twelveWeeksAgo)
 
   for (const ticket of doneTicketsWithDate) {
-    if (!ticket.resolvedAt) continue
+    if (!ticket.completedAt) continue
     for (const week of weeks) {
       const weekEnd = new Date(week.weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
-      if (ticket.resolvedAt >= week.weekStart && ticket.resolvedAt < weekEnd) {
+      if (ticket.completedAt >= week.weekStart && ticket.completedAt < weekEnd) {
         week.completed++
         week.storyPoints += ticket.storyPoints ?? 0
         break
