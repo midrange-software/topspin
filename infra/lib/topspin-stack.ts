@@ -15,6 +15,10 @@ export class TopspinStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
+    // ── CDK context ───────────────────────────────────────────────────────────
+    const frontendUrl = this.node.tryGetContext('frontendUrl') as string | undefined
+    if (!frontendUrl) throw new Error('frontendUrl CDK context is required')
+
     // ── Secrets ────────────────────────────────────────────────────────────────
     // Created manually before first deploy:
     //   aws secretsmanager create-secret --name topspin/database-url --secret-string "postgresql://..."
@@ -56,6 +60,8 @@ export class TopspinStack extends cdk.Stack {
       GITHUB_APP_PRIVATE_KEY_SECRET_ARN: githubPrivateKeySecret.secretArn,
       JIRA_CLIENT_ID_SECRET_ARN: jiraClientIdSecret.secretArn,
       JIRA_CLIENT_SECRET_SECRET_ARN: jiraClientSecretSecret.secretArn,
+      FRONTEND_URL: frontendUrl,
+      CORS_ORIGIN: frontendUrl,
     }
 
     const grantSharedSecretRead = (fn: lambda.Function) => {
@@ -151,7 +157,7 @@ export class TopspinStack extends cdk.Stack {
       apiName: 'topspin-api',
       description: 'Topspin backend API',
       corsPreflight: {
-        allowOrigins: ['*'],
+        allowOrigins: [frontendUrl],
         allowMethods: [apigatewayv2.CorsHttpMethod.ANY],
         allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
         allowCredentials: true,

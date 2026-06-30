@@ -17,10 +17,14 @@ export const createApp = () => {
   const app = new Hono()
 
   app.use('*', requestLogger())
+  const corsOrigin = process.env.NODE_ENV === 'production'
+    ? process.env.CORS_ORIGIN ?? (() => { throw new Error('CORS_ORIGIN is required in production') })()
+    : (process.env.CORS_ORIGIN ?? '*')
+
   app.use(
     '*',
     cors({
-      origin: process.env.CORS_ORIGIN ?? '*',
+      origin: corsOrigin,
       allowHeaders: ['Content-Type', 'Authorization'],
       allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       credentials: true,

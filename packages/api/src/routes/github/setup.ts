@@ -6,6 +6,7 @@ import { db } from '@topspin/db'
 import { githubInstallations, members, organizations } from '@topspin/db/schema'
 import { auth } from '../../lib/auth'
 import { enqueueJob } from '../../lib/github/enqueue'
+import { getFrontendUrl } from '../../lib/config'
 
 const setup = new Hono()
 
@@ -66,7 +67,7 @@ setup.get(
 
     await enqueueJob({ type: 'INITIAL_SYNC', installationId: installation_id })
 
-    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+    const frontendUrl = getFrontendUrl()
     return c.redirect(`${frontendUrl}/onboarding/connect-jira`)
   }
 )
