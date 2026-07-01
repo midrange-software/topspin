@@ -15,6 +15,7 @@ import {
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.API_URL!,
+  trustedOrigins: [process.env.FRONTEND_URL!],
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
